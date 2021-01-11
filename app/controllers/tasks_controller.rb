@@ -1,7 +1,6 @@
 class TasksController < ApplicationController
-  before_action :require_user_logged_in, only: [:index, :show, :edit, :new]
-  before_action :set_task, only: [:show, :edit, :update]
-  before_action :correct_user, only: [:destroy]
+  before_action :require_user_logged_in
+  before_action :set_task, only: [:show, :edit, :update, :destroy]
   
   def index
     @tasks = current_user.tasks
@@ -47,20 +46,18 @@ class TasksController < ApplicationController
   end
   
   private
-    
+
   def set_task
-    @task = current_user.tasks.find_by(id: params[:id])
+    if !Task.exists?(id: params[:id]) or current_user.id != Task.find(params[:id]).user_id
+      flash[:danger] = '自身のタスク以外は閲覧できません'
+      redirect_to tasks_url
+    else
+      @task = current_user.tasks.find_by(id: params[:id])
+    end
   end
   
   # Strong Parameter
   def task_params
     params.require(:task).permit(:content, :status)
-  end
-  
-  def correct_user
-    @task = current_user.tasks.find_by(id: params[:id])
-    unless @task
-      redirect_to task_url
-    end
   end
 end
